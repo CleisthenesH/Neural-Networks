@@ -1,0 +1,53 @@
+% Copyright 2023 Kieran W Harvie. All rights reserved.
+
+\chapter{Derivatives}
+General
+\section{A Tale of Two Derivative}
+Partial and total.
+Chain rule.
+$\nabla$ operator maybe an appendix for vectors?
+\[\frac{d\,f}{d\,t} = \sum_i \frac{\partial f}{\partial x_i}\frac{d\,x_i}{d\,t} = \nabla f \cdot \left(\frac{d\,x_0}{d\,t},\frac{d\,x_1}{d\,t},\frac{d\,x_2}{d\,t},\dots\right)\]
+\section{Dual Numbers}
+Like how we get Complex numbers from Real numbers by adjoining a new number $i$ such that $i^2=-1$ we get the Dual numbers by adjoining a new number $\epsilon$, 
+called the infinitesimal, 
+such that $\epsilon^2 = 0$.
+
+Some properties aren't that special:
+\[(x+x'\epsilon) + (y+y'\epsilon) = (x+y)+(x'+y')\epsilon\]
+
+But consider what happens for multiplication and division:
+\begin{equation*}
+\begin{aligned}
+(x+x'\epsilon)(y+y'\epsilon) =& xy+(x'y+xy')\epsilon+x'y'\epsilon^2 \\
+=& xy+(x'y+xy')\epsilon \\
+\frac{x+x'\epsilon}{y+y'\epsilon} =& \frac{(x+x'\epsilon)(y-y'\epsilon)}{(y+y'\epsilon)(y-y'\epsilon)} \\
+ =& \frac{xy+(x'y-xy')\epsilon-x'y'\epsilon^2}{y^2-y'^2\epsilon^2} \\
+ =& \frac{x}{y}+\frac{x'y-xy'}{y^2}\epsilon \\
+\end{aligned}
+\end{equation*}
+
+Define:
+$f\left(\dual{u}{u'},\dual{v}{v'}\right) = \dual{f(u,v)}{\nabla f(u,v) \cdot (u',v')}$
+
+Because:
+\begin{equation*}
+\begin{aligned}
+	f\left(\dual{u}{\frac{du}{dt}},\dual{v}{\frac{dv}{dt}}\right) =& \dual{f(u,v)}{\nabla f(u,v) \cdot \left(\frac{du}{dt},\frac{dv}{dt}\right)} \\
+	=& \dual{f(u,v)}{\frac{d}{d\,t}f(u,v)} \\
+\end{aligned}
+\end{equation*}
+(Because of the similar form this argument also works with partials).
+\subsection{Historical Note}
+This is actually close to how historic calculus 
+Transcendental law of homogeneity only keep the lowest term.
+Adequality.
+
+\section{Automatic Differentiation}
+\subsection{Forward Accumulation}
+\[f(\dual{x}{1},\dual{y}{0}) = \dual{f(x,y)}{\frac{\partial}{\partial x}f(x,y)}\]
+
+\subsection{Reverse Accumulation}
+\[f\left(\dual{x}{\frac{dx}{df}},\dual{y}{\frac{dy}{df}}\right) = \dual{f(x,y)}{\frac{df}{df}} = \dual{f(x,y)}{1}\]
+Adjoint: 
+\[\bar{x} = \frac{\partial f}{\partial x}\]
+Diamond with a forward value calculation and a reverse adjoint accumulation.
