@@ -2,11 +2,13 @@
 
 \chapter{Derivatives}
 General
+
 \section{A Tale of Two Derivative}
 Partial and total.
 Chain rule.
 $\nabla$ operator maybe an appendix for vectors?
 \[\frac{d\,f}{d\,t} = \sum_i \frac{\partial f}{\partial x_i}\frac{d\,x_i}{d\,t} = \nabla f \cdot \left(\frac{d\,x_0}{d\,t},\frac{d\,x_1}{d\,t},\frac{d\,x_2}{d\,t},\dots\right)\]
+
 \section{Dual Numbers}
 Like how we get Complex numbers from Real numbers by adjoining a new number $i$ such that $i^2=-1$ we get the Dual numbers by adjoining a new number $\epsilon$, 
 called the infinitesimal, 
@@ -37,17 +39,90 @@ Because:
 \end{aligned}
 \end{equation*}
 (Because of the similar form this argument also works with partials).
+
 \subsection{Historical Note}
-This is actually close to how historic calculus 
-Transcendental law of homogeneity only keep the lowest term.
-Adequality.
+As observed with the multiplication and divisions examples,
+representing infinitesimals with $\epsilon^2 = 0$ means discarding any powers of $\epsilon$ larger than $1$.
+
+This actually mirrors how calculus was developed.
+In 1710 Leibniz codified the "Transcendental Law of Homogeneity" which states that when equating sums involving to only include the lowest order infinitesimal terms.
+\\
+
+For example,
+if we have infinitesimals $du$ and $dv$ the Transcendental Law of Homogeneity would mean that:
+\[dv^2+dudv+2dv = 2dv\]
+This can be used to calculate derivative of a function by subtracting the version with with finite variables from infinitesimals ones: 
+\[(v+dv)(u+du)-uv = vdu+udv+dudv= vdu+udv\]
+Which clearly mimics the multiplication example.
+\\
+
+A historical note on a historical note,
+this specific application of the rule is similar to "Adequality" which can be traced back to Pierre de Fermat in a 1636 treatise.
+Here we find the extrema of a function $f$ at a value $x$ "adequating" $f(x)$ to $f(x+e)$, 
+then dividing by $e$ and discarding any remaining terms involving $e$.
+
+For a worked example consider $f(x)=x^2+x+1$ and represent "adequality" with $\sim$:
+\begin{equation*}
+\begin{aligned}
+	f(x)\sim&f(x+e)\\
+	x^2+x+1\sim& (x+e)^2+(x+e)1\\
+	\sim&x^2+2xe+e^2+x+e+1&\\
+	0\sim& 2xe+e^2+e \text{\quad (Cancellation)}\\
+	0\sim& 2x+e+1 \text{\quad (Division by $e$)}\\
+	0\sim& 2x+1 \text{\quad (Discarding $e$)}\\
+\end{aligned}
+\end{equation*}
+Observe the similarity with the previous arguments and boils down to $\frac{df}{dx}=0$.
+\\
+
+The purpose of this historical tangent is to establish manipulating infinitesimals like this is not some fringe idea related solely to this application.
 
 \section{Automatic Differentiation}
+Automatic Differentiation are a collection of techniques for algorithmically calculating the partial derivative of a function in some general way.
+The core observation is that if the functions can be expressed in terms of elementary functions with known partial derivatives we should be able to use the chain rule to calculate the partial derivative of the original function.
+
 \subsection{Forward Accumulation}
+Forward Accumulation is the most direct form of automatic differentiation.
+
+Consider the following relation:
 \[f(\dual{x}{1},\dual{y}{0}) = \dual{f(x,y)}{\frac{\partial}{\partial x}f(x,y)}\]
+Since dual numbers are easy for computers to represent and manipulate we can calculate $\frac{\partial f}{\partial x}$ by substituting in $\dual{x}{1}$ and $\dual{y}{0}$ and reading off the final infinitesimal.
+
+Consider $f(x,y) = \cos(xy)+y$, $\cos$ is an elementary function for which we can easily verify:
+\[\cos\left(\dual{x}{x'}\right) = \dual{\cos(x)}{-x'\sin(x)}\]
+Hence we can calculate the $\frac{\partial f}{\partial x}$ at $x=0$ and $y=1$ as:
+\begin{equation*}
+\begin{aligned}
+	f(\dual{0}{1},\dual{1}{0}) =& \cos(\dual{0}{1}\times\dual{1}{0})+\dual{1}{0} \\
+	=& \cos(\dual{0}{1})+\dual{1}{0} \\
+	=& \dual{1}{0}+\dual{1}{0} \\
+	=& \dual{2}{0} \\
+\end{aligned}
+\end{equation*}
+Like wise for $\frac{\partial f}{\partial y}$:
+\begin{equation*}
+\begin{aligned}
+	f(\dual{0}{0},\dual{1}{1}) =& \cos(\dual{0}{0}\times\dual{1}{1})+\dual{1}{1} \\
+	=& \cos(\dual{0}{0})+\dual{1}{1} \\
+	=& \dual{1}{0}+\dual{1}{1} \\
+	=& \dual{2}{1} \\
+\end{aligned}
+\end{equation*}
+
+This method is call {\em forward } accumulation because we exclusively move from inputs, $x$ and $y$, to intermediate results, $\cos(x,y)$, to outputs, $f(x,y)$.
+This has its advantages of letting us reuse how computers call functions to store intermediate results and avoid doing any overhead work.
+But its main flaw is only calculating one partial at a time.
+
+We can can calculate multiple partials at time with the next method.
 
 \subsection{Reverse Accumulation}
+In reverse accumulation we do a forward pass to calculate and store $f(x,y)$,
+and intermediates, 
+but then do a second pass in the reverse direction to calculate the partials by fixing the final infinitesimal as $1$.
+To see the intuition as to why this would work consider:
 \[f\left(\dual{x}{\frac{dx}{df}},\dual{y}{\frac{dy}{df}}\right) = \dual{f(x,y)}{\frac{df}{df}} = \dual{f(x,y)}{1}\]
+
+Although this method requires multiple passes and the overhead of storing intermediate results it calculated all partials at the same time.
 Adjoint: 
 \[\bar{x} = \frac{\partial f}{\partial x}\]
 Diamond with a forward value calculation and a reverse adjoint accumulation.

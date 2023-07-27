@@ -54,7 +54,7 @@ static inline dual_number dual_sin(dual_number a)
 
 static inline dual_number dual_cos(dual_number a)
 {
-	return (dual_number){cos(a.r),-a.i*cos(a.r)};
+	return (dual_number){cos(a.r),-a.i*sin(a.r)};
 }
 
 static inline dual_number dual_exp(dual_number a)

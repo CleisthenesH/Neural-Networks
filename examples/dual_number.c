@@ -43,12 +43,12 @@ void main()
 		"\t(1,2)/(0,1)=(%lf,%lf)\n",
 		div_fail.r, div_fail.i);
 
-	// Basic Functions
+	// Elementary Functions
 	const dual_number sin = dual_sin(a);
 	const dual_number cos = dual_cos(b);
 	const dual_number exp = dual_exp(b);
 
-	printf("\nBasic Functions:\n"
+	printf("Elementary Functions:\n"
 		"\tsin(a)=(%lf,%lf)\n"
 		"\tcos(a)=(%lf,%lf)\n"
 		"\texp(b)=(%lf,%lf)\n",
