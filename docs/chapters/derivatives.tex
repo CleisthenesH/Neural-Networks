@@ -118,11 +118,161 @@ We can can calculate multiple partials at time with the next method.
 \subsection{Reverse Accumulation}
 In reverse accumulation we do a forward pass to calculate and store $f(x,y)$,
 and intermediates, 
-but then do a second pass in the reverse direction to calculate the partials by fixing the final infinitesimal as $1$.
+then do a second pass in the reverse direction to calculate the partials by fixing the final infinitesimal as $1$.
+
 To see the intuition as to why this would work consider:
-\[f\left(\dual{x}{\frac{dx}{df}},\dual{y}{\frac{dy}{df}}\right) = \dual{f(x,y)}{\frac{df}{df}} = \dual{f(x,y)}{1}\]
+\[\dual{a(x,y)}{\frac{\partial f}{\partial a}} = a\left(\dual{x}{\frac{\partial f}{\partial x}},\dual{y}{\frac{\partial f}{\partial y}}\right)\]
+
 
 Although this method requires multiple passes and the overhead of storing intermediate results it calculated all partials at the same time.
 Adjoint: 
 \[\bar{x} = \frac{\partial f}{\partial x}\]
 Diamond with a forward value calculation and a reverse adjoint accumulation.
+
+\subsubsection{Algorithm Trace}
+One visual trace of the is worth a thousand lines of analysis.
+Let $f(x,y) = \frac{1}{2}x+y,\,a(x)=x^2,\,b(x)=x^3,$ and $x=0.5$, 
+we wish to preform reverse accumulation for $f(a(x),b(x))$.
+
+We will represent the state of the algorithm as a weighed directed graph,
+the nodes are the inputs/outputs/intermediates and an accumulator,
+the edge direction is downstream (from input to output),
+the edge weights are the partial derivatives of the nodes.
+\begin{multicols}{2}
+\begin{tikzpicture}
+	\node[draw, circle] (f) at (0,2) {$f$};
+	\node[draw, circle] (a) at (2,0) {$a$};
+	\node[draw, circle] (b) at (-2,0) {$b$};
+	\node[draw, circle] (x) at (0,-2) {$x$};
+	
+	\draw[->,thick] (x.north west) -- (b.south east) node[midway,fill=white]{$\frac{\partial b}{\partial x}$};
+	\draw[->,thick] (x.north east) -- (a.south west) node[midway,fill=white]{$\frac{\partial a}{\partial x}$};
+	\draw[->,thick] (a.north west) -- (f.south east) node[midway,fill=white]{$\frac{\partial f}{\partial a}$};
+	\draw[->,thick] (b.north east) -- (f.south west) node[midway,fill=white]{$\frac{\partial f}{\partial b}$};
+\end{tikzpicture}
+	\columnbreak
+	\centering
+	\begin{center}
+\begin{tabular}{|c|c|c|c|c|}
+	\hline
+	\bf Node:\phantom{\bigg|} &$x$&$a$&$b$&$f$\\
+	\hline
+	Value: &&&&\\
+	Accumulator: &&&&\\
+	\hline
+	\hline
+	\bf Edge:\phantom{\bigg|} &$\frac{\partial a}{\partial x}$&$\frac{\partial b}{\partial x}$&$\frac{\partial f}{\partial a}$&$\frac{\partial f}{\partial b}$\\
+	\hline
+	Value: &&&&\\
+	\hline
+\end{tabular}
+	\end{center}
+\end{multicols}
+
+The first pass is forward and we calculate the values of the nodes and edges.
+This is straight forward, for example, since we have $x=0.5$ and $a(x)=x^2$ the desired values are $a=0.25$ and $\frac{\partial a}{\partial x} = 1.0$
+\begin{multicols}{2}
+\begin{tikzpicture}
+	\node[draw, circle] (f) at (0,2) {$f$};
+	\node[draw, circle] (a) at (2,0) {$a$};
+	\node[draw, circle] (b) at (-2,0) {$b$};
+	\node[draw, circle] (x) at (0,-2) {$x$};
+	
+	\draw[->,thick] (x.north west) -- (b.south east) node[midway,fill=white]{$\frac{\partial b}{\partial x}$};
+	\draw[->,thick] (x.north east) -- (a.south west) node[midway,fill=white]{$\frac{\partial a}{\partial x}$};
+	\draw[->,thick] (a.north west) -- (f.south east) node[midway,fill=white]{$\frac{\partial f}{\partial a}$};
+	\draw[->,thick] (b.north east) -- (f.south west) node[midway,fill=white]{$\frac{\partial f}{\partial b}$};
+	\draw[->,red,thick] (-2.5,-2.5)--(-2.5,2.5);
+\end{tikzpicture}
+	\columnbreak
+	\centering
+	\begin{center}
+\begin{tabular}{|c|c|c|c|c|}
+	\hline
+	\bf Node:\phantom{\bigg|} &$x$&$a$&$b$&$f$\\
+	\hline
+	Value: &0.5&0.25&0.125&0.25\\
+	Accumulator: &&&&\\
+	\hline
+	\hline
+	\bf Edge:\phantom{\bigg|} &$\frac{\partial a}{\partial x}$&$\frac{\partial b}{\partial x}$&$\frac{\partial f}{\partial a}$&$\frac{\partial f}{\partial b}$\\
+	\hline
+	Value: &1.0&0.75&0.5&1.0\\
+	\hline
+\end{tabular}
+	\end{center}
+\end{multicols}
+
+The second pass is backwards where we set the accumulator of the output $f$ to $1$ and then recursively add the product of downstream element accumulators by edge weight to their upstream elements accumulators.
+
+We will break this into two parts,
+first part are the upstreams of the $f$ node.
+The $a$ accumulator is $0.5\times1.0$ and $b$'s is $1.0\times1.0$:
+\begin{multicols}{2}
+\begin{tikzpicture}
+	\node[draw, circle] (f) at (0,2) {$f$};
+	\node[draw, circle] (a) at (2,0) {$a$};
+	\node[draw, circle] (b) at (-2,0) {$b$};
+	\node[draw, circle] (x) at (0,-2) {$x$};
+	
+	\draw[->,thick] (x.north west) -- (b.south east) node[midway,fill=white]{$\frac{\partial b}{\partial x}$};
+	\draw[->,thick] (x.north east) -- (a.south west) node[midway,fill=white]{$\frac{\partial a}{\partial x}$};
+	\draw[->,thick] (a.north west) -- (f.south east) node[midway,fill=white]{$\frac{\partial f}{\partial a}$};
+	\draw[->,thick] (b.north east) -- (f.south west) node[midway,fill=white]{$\frac{\partial f}{\partial b}$};
+	\draw[->,red,thick] (-2.5,2.5)--(-2.5,0);
+\end{tikzpicture}
+	\columnbreak
+	\centering
+	\begin{center}
+\begin{tabular}{|c|c|c|c|c|}
+	\hline
+	\bf Node:\phantom{\bigg|} &$x$&$a$&$b$&$f$\\
+	\hline
+	Value: &0.5&0.25&0.125&0.25\\
+	Accumulator: &&0.5&1.0&1.0\\
+	\hline
+	\hline
+	\bf Edge:\phantom{\bigg|} &$\frac{\partial a}{\partial x}$&$\frac{\partial b}{\partial x}$&$\frac{\partial f}{\partial a}$&$\frac{\partial f}{\partial b}$\\
+	\hline
+	Value: &1.0&0.75&0.5&1.0\\
+	\hline
+\end{tabular}
+	\end{center}
+\end{multicols}
+
+And then we add continue to add the product of accumulator by edge weight to upstream nodes.
+The only upstream node left is $x$ and in hence set to $0.5\times1.0+1.0\times0.75$:
+\begin{multicols}{2}
+\begin{tikzpicture}
+	\node[draw, circle] (f) at (0,2) {$f$};
+	\node[draw, circle] (a) at (2,0) {$a$};
+	\node[draw, circle] (b) at (-2,0) {$b$};
+	\node[draw, circle] (x) at (0,-2) {$x$};
+	
+	\draw[->,thick] (x.north west) -- (b.south east) node[midway,fill=white]{$\frac{\partial b}{\partial x}$};
+	\draw[->,thick] (x.north east) -- (a.south west) node[midway,fill=white]{$\frac{\partial a}{\partial x}$};
+	\draw[->,thick] (a.north west) -- (f.south east) node[midway,fill=white]{$\frac{\partial f}{\partial a}$};
+	\draw[->,thick] (b.north east) -- (f.south west) node[midway,fill=white]{$\frac{\partial f}{\partial b}$};
+	\draw[->,red,thick] (-2.5,0)--(-2.5,-2.5);
+\end{tikzpicture}
+	\columnbreak
+	\centering
+	\begin{center}
+\begin{tabular}{|c|c|c|c|c|}
+	\hline
+	\bf Node:\phantom{\bigg|} &$x$&$a$&$b$&$f$\\
+	\hline
+	Value: &0.5&0.25&0.125&0.25\\
+	Accumulator: &1.25&0.5&1.0&1.0\\
+	\hline
+	\hline
+	\bf Edge:\phantom{\bigg|} &$\frac{\partial a}{\partial x}$&$\frac{\partial b}{\partial x}$&$\frac{\partial f}{\partial a}$&$\frac{\partial f}{\partial b}$\\
+	\hline
+	Value: &1.0&0.75&0.5&1.0\\
+	\hline
+\end{tabular}
+	\end{center}
+\end{multicols}
+
+The algorithem has completed and in the accumulator of each node is the partial derivative of $f$ by that node.
+For example $\frac{\partial f}{\partial x} = 1.25,\,\frac{\partial f}{\partial a} = 0.5,\,\frac{\partial f}{\partial b} = 1.0,$ and $\frac{\partial f}{\partial f} = 1.0$.
