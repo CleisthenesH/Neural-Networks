@@ -2,4 +2,87 @@
 
 \chapter{Appendix}
 \section{Logistic Function}
-\section{Table of Elementary Functions of dual numbers}
+The logistic function is given by:
+\[
+f(x) = \frac{1}{1+\exp(-x)}
+\]
+A reason this function is important enough to be named can be seen from its derivative:
+\begin{equation*}
+\begin{aligned}
+	f'(x) =& \frac{\exp(-x)}{(1+\exp(-x))^2}\\
+	=& \frac{1}{1+\exp(-x)}\left(1-\frac{1}{1+\exp(-x)}\right)\\
+	=& f(x)(1-f(x)) \\
+\end{aligned}
+\end{equation*}
+Alongside being a cool differential equation it has a lot of application.
+\\
+
+For example, 
+how does the population of a species grow as a function of time?
+A basic model would have two factors.
+The first factor is population,
+as more members of the species means more births.
+The second factor is how close the population is to the environment's carrying capacity,
+as more members means more competition. 
+\[
+f'(x) = \overbrace{f(x)}^\text{Population}\times\overbrace{(1-f(x))}^\text{Scarcity}
+\]
+
+But for our purposes the logistic functions most important role comes from logistic regression.
+
+\subsection{Logistic Regression}
+Say we have a variable $x$ which we believe influences which of two categories an event is likely to fall in.
+For example time spent preparing to pass/fail or weight of a load for a wall to collapse or not.
+How do we predict the chance of being in a given category based on $x$?
+Logistic Regression is a common method for achieving that.
+\\
+
+Let's formalize the problem as follows:
+We are given a vector of $n$ real numbers, $x\in \mathbb{R}^n$, and a list of $n$ $1$'s or $0$'s, $y\in \{0,1\}^n$,
+representing pass or fail respectfully.
+The goal is to find real constants $\beta_0$ and $\beta_1$ such that when the function:
+\[
+	f(x) = \frac{1}{1+\exp(-(\beta_0+\beta_1 x))}
+\]
+Gives the probability $p_k = f(x_k)$ that $y_k=1$,
+the following expression is maximized:
+\[
+	\ell = \sum_{k=1}^n\big[y_k\ln(p_k)+(1-y_k)\ln(1-p_k)\big]
+\]
+Where $\ell$ is called the log-likelihood.
+
+\subsection{Information Theory}
+But why is the logistic function used in categorization problems,
+and where did the log-likelihood come from?
+\\
+
+Well the answer comes from information theory,
+which is too complex to fully cover here.
+But the main insight is that the "information" obtained from witnessing an event is related by:
+\[\text{Information} \propto -\ln(\text{Probability})\]
+
+Additive information here.
+
+Lagrangian:
+\[L = -\sum_kp_k\ln p_k+\lambda_0\left(\sum_k p_k - 1\right) + \lambda_1\sum_k (y_k-p_k) + \sum_k\lambda_2(y_k-p_k)x_k\]
+\[ 0 = -1-\ln(p_k) +\lambda_0 -\lambda_1-\lambda_2x_k\]
+
+\subsection{Efficient Calculation}
+The hyperbolic tangent is defined as:
+\[\tanh(x) = \frac{\exp(x)-\exp(-x)}{\exp(x)+\exp(-x)}\]
+Simple algebra shows:
+\[\frac{1}{1+\exp(-x)} = \frac{1}{2}\left(1+\tanh\left(\frac{x}{2}\right)\right)\]
+The left hand side has one sign change, one function call, one addition, and one division.
+The right hand side has two multiplications (times by $0.5$ instead of divide by $2$), one addition, and one function call.
+\\
+
+In computation environments where both $\exp$ and $\tanh$ are similarly costed and a division is worth at least two multiplications,
+not an unlikely circumstance, 
+it may make sense to use the right hand side instead of the more direct left hand side.
+\\
+
+Another similar optimization is that if we have the logistic function can also calculate its derivative of using the differential equation:
+\[f'(x) = f(x)(1-f(x))\]
+Instead of making a function call to $\exp$. 
+
+\section{Table of Elementary Functions of Dual Numbers}
